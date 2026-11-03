@@ -1,0 +1,232 @@
+import java.util.ArrayList;
+import java.util.Scanner;
+
+// Custom Exceptions
+class InvalidVehicleException extends Exception {
+    InvalidVehicleException(String msg) {
+        super(msg);
+    }
+}
+
+class VehicleUnavailableException extends Exception {
+    VehicleUnavailableException(String msg) {
+        super(msg);
+    }
+}
+
+class InvalidDurationException extends Exception {
+    InvalidDurationException(String msg) {
+        super(msg);
+    }
+}
+
+class InvalidCustomerException extends Exception {
+    InvalidCustomerException(String msg) {
+        super(msg);
+    }
+}
+
+class LateReturnException extends Exception {
+    LateReturnException(String msg) {
+        super(msg);
+    }
+}
+
+// Vehicle Class
+class Vehicle {
+    int id;
+    String name;
+    double rate;
+    boolean available = true;
+
+    Vehicle(int id, String name, double rate) {
+        this.id = id;
+        this.name = name;
+        this.rate = rate;
+    }
+
+    double calculateCharge(int days) {
+        return rate * days;
+    }
+
+    void display() {
+        System.out.println(id + "  " + name + "  Rs." +
+                rate + "/day  " +
+                (available ? "Available" : "Rented"));
+    }
+}
+
+// Rental System Class
+class RentalSystem {
+    ArrayList<Vehicle> vehicles = new ArrayList<>();
+
+    RentalSystem() {
+        vehicles.add(new Vehicle(101, "Car", 2000));
+        vehicles.add(new Vehicle(102, "Bike", 800));
+        vehicles.add(new Vehicle(103, "Van", 3000));
+    }
+
+    Vehicle findVehicle(int id)
+            throws InvalidVehicleException {
+
+        for (Vehicle v : vehicles) {
+            if (v.id == id) {
+                return v;
+            }
+        }
+
+        throw new InvalidVehicleException(
+                "Invalid Vehicle ID!");
+    }
+
+    void displayVehicles() {
+        System.out.println("\n--- Available Vehicles ---");
+
+        for (Vehicle v : vehicles) {
+            v.display();
+        }
+    }
+
+    void rentVehicle(int id, String customer, int days)
+            throws InvalidVehicleException,
+            VehicleUnavailableException,
+            InvalidDurationException,
+            InvalidCustomerException {
+
+        if (customer == null || customer.trim().isEmpty()) {
+            throw new InvalidCustomerException(
+                    "Invalid Customer Details!");
+        }
+
+        if (days <= 0) {
+            throw new InvalidDurationException(
+                    "Rental duration must be positive!");
+        }
+
+        Vehicle v = findVehicle(id);
+
+        if (!v.available) {
+            throw new VehicleUnavailableException(
+                    "Vehicle is already rented!");
+        }
+
+        v.available = false;
+
+        System.out.println("\nVehicle rented successfully!");
+        System.out.println("Customer: " + customer);
+        System.out.println("Vehicle: " + v.name);
+        System.out.println("Rental Charge: Rs." +
+                v.calculateCharge(days));
+    }
+
+    void returnVehicle(int id, int actualDays, int lateDays)
+            throws InvalidVehicleException,
+            InvalidDurationException,
+            LateReturnException {
+
+        Vehicle v = findVehicle(id);
+
+        if (actualDays <= 0 || lateDays < 0) {
+            throw new InvalidDurationException(
+                    "Invalid return duration!");
+        }
+
+        if (v.available) {
+            throw new VehicleUnavailableException(
+                    "Vehicle was not rented!");
+        }
+
+        double total = v.calculateCharge(actualDays);
+
+        if (lateDays > 0) {
+            double fine = lateDays * 500;
+
+            total += fine;
+
+            System.out.println("Late Return Fine: Rs." + fine);
+            System.out.println("Late return detected!");
+        }
+
+        v.available = true;
+
+        System.out.println("Vehicle returned successfully!");
+        System.out.println("Total Rental Charge: Rs." + total);
+    }
+}
+
+// Main Class
+public class VehicleRental {
+    public static void main(String[] args) {
+
+        Scanner sc = new Scanner(System.in);
+        RentalSystem system = new RentalSystem();
+
+        while (true) {
+            System.out.println("\n===== VEHICLE RENTAL SYSTEM =====");
+            System.out.println("1. Display Vehicles");
+            System.out.println("2. Rent Vehicle");
+            System.out.println("3. Return Vehicle");
+            System.out.println("4. Exit");
+            System.out.print("Enter choice: ");
+
+            int choice = sc.nextInt();
+
+            try {
+                switch (choice) {
+
+                    case 1:
+                        system.displayVehicles();
+                        break;
+
+                    case 2:
+                        System.out.print("Enter Vehicle ID: ");
+                        int id = sc.nextInt();
+
+                        sc.nextLine();
+
+                        System.out.print("Enter Customer Name: ");
+                        String name = sc.nextLine();
+
+                        System.out.print("Enter Rental Days: ");
+                        int days = sc.nextInt();
+
+                        system.rentVehicle(id, name, days);
+                        break;
+
+                    case 3:
+                        System.out.print("Enter Vehicle ID: ");
+                        int returnId = sc.nextInt();
+
+                        System.out.print("Enter Actual Rental Days: ");
+                        int actualDays = sc.nextInt();
+
+                        System.out.print("Enter Late Days: ");
+                        int lateDays = sc.nextInt();
+
+                        system.returnVehicle(
+                                returnId, actualDays, lateDays);
+                        break;
+
+                    case 4:
+                        System.out.println("Thank You!");
+                        sc.close();
+                        return;
+
+                    default:
+                        System.out.println("Invalid Choice!");
+                }
+
+            } catch (InvalidVehicleException |
+                     VehicleUnavailableException |
+                     InvalidDurationException |
+                     InvalidCustomerException e) {
+
+                System.out.println("Error: " + e.getMessage());
+
+            } catch (Exception e) {
+                System.out.println("Error: " + e.getMessage());
+                sc.nextLine();
+            }
+        }
+    }
+}
